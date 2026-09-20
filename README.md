@@ -46,8 +46,40 @@ real** — ver os comentários no topo de `lib/idface-client/types.ts` e
 `lib/idface-client/firmware.ts`. Validar antes de apontar para um leitor
 real, conforme exigido pelo spec do produto.
 
-Ainda não implementados: módulo de diagnóstico das cancelas, interface e
-relatórios.
+**Entregável 3 — módulo de diagnóstico** (`lib/diagnostico/`): transforma
+"a cancela vive dando problema" em número auditável, por cancela. Todo
+indicador aqui é uma INFERÊNCIA a partir de logs de autorização — nunca uma
+confirmação do movimento físico da haste — e os tipos carregam isso
+explicitamente (`ResultadoIndicador`) para a UI nunca esconder essa
+limitação.
+
+- `reapresentacao.ts` — mesmo rosto reconhecido de novo na mesma
+  cancela/leitor em menos de 60s.
+- `liberacao-sem-passagem.ts` — autorização sem "efetivado" correspondente;
+  fica **indisponível com motivo explicado** quando o firmware do leitor
+  não distingue os dois tipos de evento.
+- `entrada-saida.ts` — entrada sem saída correspondente e vice-versa, por
+  pessoa e período.
+- `vazao.ts` — intervalo entre autorizações consecutivas na mesma cancela,
+  agrupado por hora e dia da semana (para detectar ciclo lento da haste).
+- `baseline.ts` — média móvel de 30 dias por cancela e limiar de alerta por
+  desvio padrão configurável.
+- `ocorrencia-manual.ts` — registro rápido da portaria (não abriu / não
+  desceu / desceu sobre o veículo / abertura espontânea) — a fonte de
+  verdade sobre o comportamento físico da cancela, persistido em
+  `OcorrenciaManual` no schema Prisma.
+- `carona.ts` — **não implementado de propósito**: requer contagem de
+  ocupação independente das autorizações (sensor dedicado), que não existe
+  na infraestrutura atual; retorna sempre "indisponível" com o motivo
+  documentado, em vez de inventar um número.
+- `relatorio-mensal.ts` — agrega os indicadores acima por cancela, cruzados
+  com as ocorrências manuais e horários críticos, para o relatório "Saúde
+  das cancelas". A renderização em PDF fica para o entregável de
+  interface/relatórios — aqui só os dados agregados e testáveis.
+
+Ainda não implementados: interface e relatórios (incluindo a geração do PDF
+mensal), fila de sincronização persistida em banco (hoje só a referência em
+memória do agente).
 
 ## Stack
 
@@ -86,6 +118,16 @@ lib/
     log-collector.ts   coleta incremental de logs por cursor
     queue.ts            fila de sincronização com backoff exponencial
     firmware.ts         detecção de firmware e degradação graciosa
+  diagnostico/    indicadores de saúde das cancelas (inferidos dos logs)
+    types.ts             EventoAcesso normalizado, ResultadoIndicador<T>
+    reapresentacao.ts    mesmo rosto na mesma cancela em <60s
+    liberacao-sem-passagem.ts  autorizado sem efetivado
+    entrada-saida.ts     entrada/saída sem par correspondente
+    vazao.ts             intervalo entre autorizações por hora/dia
+    baseline.ts          média móvel 30 dias + limiar de alerta
+    ocorrencia-manual.ts registro da portaria (fonte de verdade física)
+    carona.ts            indicador indisponível (sem sensor de ocupação)
+    relatorio-mensal.ts  agregação para o relatório "Saúde das cancelas"
 prisma/
   schema.prisma  modelo de dados persistente do cadastro
 ```

@@ -1,11 +1,13 @@
 // Modelo de dados do cadastro — fonte da verdade do sistema.
 //
-// Escopo deste entregável: cadastro (pessoas, empresas, vagas, veículos,
-// subsolos, leitores) e o registro de consentimento LGPD que alimenta a
-// camada de tradução (lib/idface/translation.ts). Fila de sincronização,
-// logs de acesso e trilha de auditoria com encadeamento de hash são
-// entregáveis futuros (agente / módulo de diagnóstico / segurança) e não
-// estão modelados aqui ainda.
+// Escopo: cadastro (pessoas, empresas, vagas, veículos, subsolos, leitores),
+// consentimento LGPD que alimenta a camada de tradução
+// (lib/idface/translation.ts) e o registro manual de ocorrência da portaria
+// que alimenta o módulo de diagnóstico (lib/diagnostico/ocorrencia-manual.ts).
+// Fila de sincronização (fica em memória no agente por ora, ver
+// lib/idface-client/queue.ts), logs de acesso consolidados e trilha de
+// auditoria com encadeamento de hash são entregáveis futuros e não estão
+// modelados aqui ainda.
 
 generator client {
   provider = "prisma-client-js"
@@ -37,6 +39,13 @@ enum CancelaId {
 enum PapelLeitor {
   entrada
   saida
+}
+
+enum TipoOcorrenciaManual {
+  nao_abriu
+  nao_desceu
+  desceu_sobre_veiculo
+  abertura_espontanea
 }
 
 model Empresa {
@@ -153,4 +162,24 @@ model Leitor {
 
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
+}
+
+/// Registro manual de ocorrência feito pela portaria — fonte de verdade
+/// sobre o comportamento físico da cancela, já que os logs do iDFace só
+/// registram autorizações (ver lib/diagnostico/ocorrencia-manual.ts e
+/// lib/diagnostico/relatorio-mensal.ts, que cruza este registro com os
+/// indicadores inferidos dos logs).
+model OcorrenciaManual {
+  id        String               @id @default(uuid())
+  cancelaId CancelaId
+  tipo      TipoOcorrenciaManual
+  placa     String?
+  observacao String?
+  anexoFotoUrl String?
+
+  registradoPorUsuarioId String
+  /// Automático — momento do registro, não editável.
+  registradoEm DateTime @default(now())
+
+  @@index([cancelaId, registradoEm])
 }
