@@ -1,0 +1,156 @@
+// Modelo de dados do cadastro — fonte da verdade do sistema.
+//
+// Escopo deste entregável: cadastro (pessoas, empresas, vagas, veículos,
+// subsolos, leitores) e o registro de consentimento LGPD que alimenta a
+// camada de tradução (lib/idface/translation.ts). Fila de sincronização,
+// logs de acesso e trilha de auditoria com encadeamento de hash são
+// entregáveis futuros (agente / módulo de diagnóstico / segurança) e não
+// estão modelados aqui ainda.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TipoVinculo {
+  condomino
+  funcionario
+  prestador_fixo
+  visitante_temporario
+}
+
+enum StatusPessoa {
+  ativo
+  bloqueado
+  inativo
+}
+
+enum CancelaId {
+  A
+  B
+}
+
+enum PapelLeitor {
+  entrada
+  saida
+}
+
+model Empresa {
+  id        String   @id @default(uuid())
+  nome      String
+  sala      String
+  pessoas   Pessoa[]
+  vagas     Vaga[]
+  criadoEm  DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+}
+
+model Subsolo {
+  id        String   @id @default(uuid())
+  /// "1", "2", "3"
+  codigo    String   @unique
+  nome      String
+  /// Cancela que atende este subsolo — dado de configuração.
+  cancelaId CancelaId
+  vagas     Vaga[]
+  pessoas   PessoaSubsolo[]
+}
+
+model Pessoa {
+  id          String       @id @default(uuid())
+  nome        String
+  cpf         String       @unique
+  telefone    String?
+  email       String?
+  empresa     Empresa      @relation(fields: [empresaId], references: [id])
+  empresaId   String
+  tipoVinculo TipoVinculo
+  status      StatusPessoa @default(ativo)
+  validadeInicio DateTime
+  /// Nulo = vínculo por prazo indeterminado (condômino, funcionário fixo).
+  validadeFim    DateTime?
+
+  subsolosAutorizados PessoaSubsolo[]
+  veiculos            Veiculo[]
+  vaga                Vaga?
+  consentimentos      ConsentimentoLGPD[]
+
+  /// Cache do consentimento vigente — a fonte da verdade é ConsentimentoLGPD;
+  /// este campo evita uma consulta extra na camada de tradução.
+  consentimentoBiometriaAceito Boolean @default(false)
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@index([empresaId])
+}
+
+/// Um por subsolo autorizado — política: pessoa pode ter direito a mais de
+/// um subsolo, e a camada de tradução concede a união das cancelas
+/// correspondentes (ver lib/idface/routing.ts).
+model PessoaSubsolo {
+  pessoa    Pessoa  @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
+  pessoaId  String
+  subsolo   Subsolo @relation(fields: [subsoloId], references: [id])
+  subsoloId String
+
+  @@id([pessoaId, subsoloId])
+}
+
+model Veiculo {
+  id       String  @id @default(uuid())
+  pessoa   Pessoa  @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
+  pessoaId String
+  placa    String  @unique
+  modelo   String?
+  cor      String?
+
+  @@index([pessoaId])
+}
+
+model Vaga {
+  id        String   @id @default(uuid())
+  numero    String
+  subsolo   Subsolo  @relation(fields: [subsoloId], references: [id])
+  subsoloId String
+  empresa   Empresa? @relation(fields: [empresaId], references: [id])
+  empresaId String?
+  pessoa    Pessoa?  @relation(fields: [pessoaId], references: [id])
+  pessoaId  String?  @unique
+
+  @@unique([subsoloId, numero])
+}
+
+/// Registro versionado do consentimento LGPD para uso de biometria —
+/// data/hora e IP do aceite, conforme exigido pelo spec. A revogação é
+/// modelada como um novo registro com aceito=false (histórico completo,
+/// nunca sobrescrito).
+model ConsentimentoLGPD {
+  id        String   @id @default(uuid())
+  pessoa    Pessoa   @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
+  pessoaId  String
+  versaoTermo String
+  aceito    Boolean
+  ip        String
+  registradoEm DateTime @default(now())
+
+  @@index([pessoaId])
+}
+
+model Leitor {
+  id              String      @id @default(uuid())
+  nome            String
+  papel           PapelLeitor
+  ipAddress       String      @unique
+  firmwareVersion String?
+
+  online          Boolean   @default(false)
+  ultimoSyncEm    DateTime?
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+}
