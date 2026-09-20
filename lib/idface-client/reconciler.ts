@@ -72,6 +72,16 @@ export function construirOperacoesDeProvisionamento(
   const usuariosParaAtualizar: UsuarioParaAtualizar[] = [];
   const matriculasVistas = new Set<string>();
 
+  function adicionarSeNovo<T extends { nome: string }>(
+    paraCriarPorNome: Map<string, T>,
+    jaExistentesNoDispositivo: Set<string>,
+    item: T,
+  ): void {
+    if (!jaExistentesNoDispositivo.has(item.nome) && !paraCriarPorNome.has(item.nome)) {
+      paraCriarPorNome.set(item.nome, item);
+    }
+  }
+
   for (const plano of planos) {
     if (matriculasVistas.has(plano.usuario.matricula)) {
       throw new Error(
@@ -81,15 +91,11 @@ export function construirOperacoesDeProvisionamento(
     matriculasVistas.add(plano.usuario.matricula);
 
     for (const grupo of plano.grupos) {
-      if (!nomesGruposExistentes.has(grupo.nome) && !gruposParaCriarPorNome.has(grupo.nome)) {
-        gruposParaCriarPorNome.set(grupo.nome, grupo);
-      }
+      adicionarSeNovo(gruposParaCriarPorNome, nomesGruposExistentes, grupo);
     }
 
     for (const regra of plano.regrasAcesso) {
-      if (!nomesRegrasExistentes.has(regra.nome) && !regrasParaCriarPorNome.has(regra.nome)) {
-        regrasParaCriarPorNome.set(regra.nome, regra);
-      }
+      adicionarSeNovo(regrasParaCriarPorNome, nomesRegrasExistentes, regra);
     }
 
     const idExistente = idsUsuariosPorMatricula.get(plano.usuario.matricula);

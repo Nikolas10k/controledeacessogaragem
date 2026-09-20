@@ -81,6 +81,38 @@ Ainda não implementados: interface e relatórios (incluindo a geração do PDF
 mensal), fila de sincronização persistida em banco (hoje só a referência em
 memória do agente).
 
+## Segurança e LGPD — estado atual vs. exigido pelo spec
+
+O spec do produto trata segurança e LGPD como requisito de primeira classe
+(biometria é dado pessoal sensível). Nesta fase (entregáveis 1-3, modelo de
+dados + agente + diagnóstico) já vale:
+
+- Nenhum segredo hardcoded, nenhum log de dado pessoal/sessão em `lib/`
+  (verificado manualmente — sem `console.*` no código de produção, sem
+  senha/token/CPF em texto fixo).
+- `ErroIDFace.corpo` (resposta crua do dispositivo) e a query string com o
+  token de sessão estão documentados no código como sensíveis — quem
+  consumir este cliente não deve logá-los sem redigir.
+- Consentimento LGPD já é modelado de forma versionada e auditável
+  (`ConsentimentoLGPD`: aceito/recusado, versão do termo, IP, data).
+
+Meramente adiado para os entregáveis de interface/aplicação — não
+implementado ainda, e não deve ser lido como concluído:
+
+- Armazenamento segregado e criptografado de fotos/templates com chave fora
+  do banco (nenhuma foto/template é persistida por este código ainda — o
+  upload vai direto ao dispositivo).
+- Cofre de segredos para credenciais dos leitores (hoje passadas como
+  opções ao `IDFaceClient`; onde/como ficam guardadas é responsabilidade da
+  aplicação que instancia o cliente).
+- MFA do perfil administrador, sessão com expiração/rate limit/bloqueio
+  progressivo, trilha de auditoria com encadeamento de hash, TLS com
+  certificado próprio na rede local, VLAN isolada dos leitores — tudo isso
+  é infraestrutura/aplicação, fora do escopo do que existe em `lib/` até
+  aqui.
+- Expurgo automático de imagens/logs por prazo de retenção, exportação e
+  exclusão de dados a pedido do titular.
+
 ## Stack
 
 Node.js + TypeScript · Prisma + PostgreSQL · Vitest.

@@ -7,7 +7,13 @@
  */
 
 import type { CancelaId } from "../domain/types.js";
-import type { EventoAcesso, ResultadoIndicador } from "./types.js";
+import {
+  agruparEOrdenarPorTempo,
+  chavePessoaLeitorCancela,
+  comPessoa,
+  type EventoAcesso,
+  type ResultadoIndicador,
+} from "./types.js";
 
 export interface LiberacaoSemPassagem {
   pessoaId: string;
@@ -17,10 +23,6 @@ export interface LiberacaoSemPassagem {
 }
 
 const JANELA_PADRAO_SEGUNDOS = 60;
-
-function chaveDeAgrupamento(evento: EventoAcesso): string {
-  return `${evento.pessoaId}::${evento.papelLeitor}::${evento.cancelaId ?? ""}`;
-}
 
 export function detectarLiberacoesSemPassagem(
   eventos: EventoAcesso[],
@@ -38,27 +40,35 @@ export function detectarLiberacoesSemPassagem(
   }
 
   const janelaSegundos = opcoes.janelaSegundos ?? JANELA_PADRAO_SEGUNDOS;
-  const comPessoa = eventos.filter((e) => e.pessoaId !== undefined);
-
-  const porGrupo = new Map<string, EventoAcesso[]>();
-  for (const evento of comPessoa) {
-    const chave = chaveDeAgrupamento(evento);
-    const lista = porGrupo.get(chave) ?? [];
-    lista.push(evento);
-    porGrupo.set(chave, lista);
-  }
+  const porGrupo = agruparEOrdenarPorTempo(
+    comPessoa(eventos),
+    chavePessoaLeitorCancela,
+    (e) => e.timestamp.getTime(),
+  );
 
   const ocorrencias: LiberacaoSemPassagem[] = [];
-  for (const grupo of porGrupo.values()) {
-    const ordenado = [...grupo].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+  for (const ordenado of porGrupo.values()) {
+    // ambos já ordenados ascendentemente: um único ponteiro percorre
+    // `efetivados` em vez de reescaneá-lo para cada evento "autorizado"
+    // (evita O(n²) por grupo em meses de log).
+    const efetivados = ordenado.filter((e) => e.tipo === "efetivado");
+    let ponteiro = 0;
+
     for (const evento of ordenado) {
       if (evento.tipo !== "autorizado") continue;
-      const temEfetivadoProximo = ordenado.some(
-        (outro) =>
-          outro.tipo === "efetivado" &&
-          outro.timestamp.getTime() >= evento.timestamp.getTime() &&
-          (outro.timestamp.getTime() - evento.timestamp.getTime()) / 1000 <= janelaSegundos,
-      );
+
+      while (
+        ponteiro < efetivados.length &&
+        efetivados[ponteiro]!.timestamp.getTime() < evento.timestamp.getTime()
+      ) {
+        ponteiro++;
+      }
+
+      const candidato = efetivados[ponteiro];
+      const temEfetivadoProximo =
+        candidato !== undefined &&
+        (candidato.timestamp.getTime() - evento.timestamp.getTime()) / 1000 <= janelaSegundos;
+
       if (!temEfetivadoProximo) {
         ocorrencias.push({
           pessoaId: evento.pessoaId!,

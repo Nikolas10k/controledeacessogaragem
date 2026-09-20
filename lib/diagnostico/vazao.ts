@@ -6,7 +6,7 @@
  */
 
 import type { CancelaId } from "../domain/types.js";
-import type { EventoAcesso } from "./types.js";
+import { agruparPor, type EventoAcesso } from "./types.js";
 
 export interface IntervaloDeVazao {
   cancelaId: CancelaId;
@@ -62,22 +62,16 @@ function mediana(valores: number[]): number {
 export function agruparVazaoPorHoraEDiaDaSemana(
   intervalos: IntervaloDeVazao[],
 ): EstatisticaVazao[] {
-  const grupos = new Map<string, number[]>();
-  for (const intervalo of intervalos) {
-    const chave = `${intervalo.diaDaSemana}::${intervalo.hora}`;
-    const lista = grupos.get(chave) ?? [];
-    lista.push(intervalo.segundos);
-    grupos.set(chave, lista);
-  }
+  const grupos = agruparPor(intervalos, (i) => `${i.diaDaSemana}::${i.hora}`);
 
   const estatisticas: EstatisticaVazao[] = [];
-  for (const [chave, segundos] of grupos) {
+  for (const [chave, grupo] of grupos) {
     const [diaDaSemanaStr, horaStr] = chave.split("::");
     estatisticas.push({
       diaDaSemana: Number(diaDaSemanaStr),
       hora: Number(horaStr),
-      amostras: segundos.length,
-      medianaSegundos: mediana(segundos),
+      amostras: grupo.length,
+      medianaSegundos: mediana(grupo.map((i) => i.segundos)),
     });
   }
 

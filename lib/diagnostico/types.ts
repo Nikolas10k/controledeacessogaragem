@@ -40,3 +40,56 @@ export interface EventoAcesso {
 export type ResultadoIndicador<T> =
   | { disponivel: true; tipo: TipoIndicador; ocorrencias: T[] }
   | { disponivel: false; motivoIndisponivel: string };
+
+/**
+ * Utilitários de agrupamento compartilhados pelos indicadores deste módulo
+ * — evita que cada arquivo reimplemente seu próprio "Map + push" e sua
+ * própria chave pessoa/leitor/cancela.
+ */
+
+/** Agrupa itens por chave, preservando a ordem relativa dentro de cada grupo. */
+export function agruparPor<T>(itens: T[], chave: (item: T) => string): Map<string, T[]> {
+  const grupos = new Map<string, T[]>();
+  for (const item of itens) {
+    const lista = grupos.get(chave(item)) ?? [];
+    lista.push(item);
+    grupos.set(chave(item), lista);
+  }
+  return grupos;
+}
+
+/** Como `agruparPor`, mas cada grupo sai ordenado ascendentemente por `tempoMs`. */
+export function agruparEOrdenarPorTempo<T>(
+  itens: T[],
+  chave: (item: T) => string,
+  tempoMs: (item: T) => number,
+): Map<string, T[]> {
+  const grupos = agruparPor(itens, chave);
+  for (const [chaveDoGrupo, grupo] of grupos) {
+    grupos.set(
+      chaveDoGrupo,
+      [...grupo].sort((a, b) => tempoMs(a) - tempoMs(b)),
+    );
+  }
+  return grupos;
+}
+
+/** Chave de agrupamento pessoa + leitor + cancela, usada por reapresentação e liberação sem passagem. */
+export function chavePessoaLeitorCancela(evento: EventoAcesso): string {
+  return `${evento.pessoaId}::${evento.papelLeitor}::${evento.cancelaId ?? ""}`;
+}
+
+/** Eventos correlacionados a uma pessoa cadastrada. */
+export function comPessoa(eventos: EventoAcesso[]): EventoAcesso[] {
+  return eventos.filter((e) => e.pessoaId !== undefined);
+}
+
+/**
+ * Eventos "autorizado" correlacionados a uma pessoa — o evento de
+ * apresentação/movimento em si; "efetivado" é só a confirmação da mesma
+ * passagem (ver EventoAcesso.tipo) e não deve ser tratado como um novo
+ * movimento por indicadores como reapresentação ou entrada/saída.
+ */
+export function autorizadosComPessoa(eventos: EventoAcesso[]): EventoAcesso[] {
+  return comPessoa(eventos).filter((e) => e.tipo === "autorizado");
+}

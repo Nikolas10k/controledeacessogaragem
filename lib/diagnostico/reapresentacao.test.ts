@@ -86,6 +86,17 @@ describe("detectarReapresentacoes", () => {
     expect(resultado.ocorrencias).toHaveLength(2);
   });
 
+  it("não confunde a efetivação da própria passagem com uma reapresentação", () => {
+    const eventos = [
+      evento({ id: "e1", tipo: "autorizado", timestamp: new Date("2026-09-20T08:00:00Z") }),
+      evento({ id: "e2", tipo: "efetivado", timestamp: new Date("2026-09-20T08:00:01Z") }),
+    ];
+
+    const resultado = detectarReapresentacoes(eventos);
+    if (!resultado.disponivel) throw new Error("esperado disponível");
+    expect(resultado.ocorrencias).toHaveLength(0);
+  });
+
   it("respeita janela customizada", () => {
     const eventos = [
       evento({ id: "e1", timestamp: new Date("2026-09-20T08:00:00Z") }),

@@ -89,4 +89,37 @@ describe("detectarEventosNaoPareados", () => {
     if (!resultado.disponivel) throw new Error("esperado disponível");
     expect(resultado.ocorrencias).toHaveLength(0);
   });
+
+  it("não confunde a efetivação da própria passagem com uma nova entrada/saída", () => {
+    const eventos = [
+      evento({
+        id: "e1",
+        papelLeitor: "entrada",
+        tipo: "autorizado",
+        timestamp: new Date("2026-09-20T08:00:00Z"),
+      }),
+      evento({
+        id: "e2",
+        papelLeitor: "entrada",
+        tipo: "efetivado",
+        timestamp: new Date("2026-09-20T08:00:01Z"),
+      }),
+      evento({
+        id: "e3",
+        papelLeitor: "saida",
+        tipo: "autorizado",
+        timestamp: new Date("2026-09-20T18:00:00Z"),
+      }),
+      evento({
+        id: "e4",
+        papelLeitor: "saida",
+        tipo: "efetivado",
+        timestamp: new Date("2026-09-20T18:00:01Z"),
+      }),
+    ];
+
+    const resultado = detectarEventosNaoPareados(eventos, periodo);
+    if (!resultado.disponivel) throw new Error("esperado disponível");
+    expect(resultado.ocorrencias).toHaveLength(0);
+  });
 });

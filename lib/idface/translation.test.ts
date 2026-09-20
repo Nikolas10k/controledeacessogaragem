@@ -155,6 +155,13 @@ describe("traduzirPessoaParaProvisionamento", () => {
     ).toThrow(ErroDeProvisionamento);
   });
 
+  it("não trata id duplicado em subsolosAutorizadosIds como subsolo inexistente", () => {
+    const pessoa = pessoaBase({ subsolosAutorizadosIds: ["s1", "s1"] });
+    expect(() =>
+      traduzirPessoaParaProvisionamento(pessoa, todosSubsolos, leitorEntrada, leitorSaida),
+    ).not.toThrow();
+  });
+
   it("lança erro quando a pessoa referencia um subsolo que não existe na lista fornecida", () => {
     const pessoa = pessoaBase({ subsolosAutorizadosIds: ["subsolo-inexistente"] });
     expect(() =>

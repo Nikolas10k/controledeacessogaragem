@@ -8,7 +8,7 @@
  * leitores (fronteira AGENTE / APLICAÇÃO do spec do produto).
  */
 
-import type { TransporteHttp } from "./transport.js";
+import type { RespostaHttp, TransporteHttp } from "./transport.js";
 import type {
   ClausulaWhere,
   RespostaCountObjects,
@@ -20,6 +20,15 @@ import type {
 } from "./types.js";
 
 export class ErroIDFace extends Error {
+  /**
+   * `corpo` carrega a resposta crua do dispositivo — em erros de
+   * create/modify_objects ela pode ecoar os valores enviados (nome, CPF).
+   * NUNCA registrar este campo em log de aplicação/telemetria sem
+   * redigir dados pessoais antes (requisito de segurança de primeira
+   * classe do spec do produto: "nenhum dado pessoal em log de aplicação,
+   * mensagem de erro ou telemetria"). `message` sozinho já identifica a
+   * rota e o status; use `corpo` só em depuração pontual e local.
+   */
   constructor(
     message: string,
     readonly status?: number,
@@ -116,20 +125,29 @@ export class IDFaceClient {
     return this.session;
   }
 
-  private async requisicaoAutenticada(
+  /**
+   * Núcleo comum a toda chamada autenticada, qualquer que seja o transporte
+   * (JSON ou binário): garante sessão, executa `chamar`, e em 401/403
+   * derruba a sessão e tenta de novo exatamente uma vez antes de desistir.
+   *
+   * Nota de segurança: o token de sessão vai na query string da URL (é
+   * assim que a API .fcgi do iDFace exige — ver types.ts), então qualquer
+   * log de acesso HTTP ou de requisições feito por quem consome este
+   * cliente (ex.: um proxy, um middleware de log da aplicação) precisa
+   * redigir a query string antes de persistir, para não gravar o token em
+   * texto puro.
+   */
+  private async executarAutenticada(
     rota: string,
-    corpo: Record<string, unknown>,
+    chamar: (session: string) => Promise<RespostaHttp>,
     tentarRenovarAoExpirar = true,
   ): Promise<unknown> {
     const session = await this.garantirSessao();
-    const resposta = await this.transporte.postJson(
-      `${this.caminho(rota)}?session=${encodeURIComponent(session)}`,
-      corpo,
-    );
+    const resposta = await chamar(session);
 
     if ((resposta.status === 401 || resposta.status === 403) && tentarRenovarAoExpirar) {
       this.session = undefined;
-      return this.requisicaoAutenticada(rota, corpo, false);
+      return this.executarAutenticada(rota, chamar, false);
     }
 
     if (resposta.status !== 200) {
@@ -141,6 +159,26 @@ export class IDFaceClient {
     }
 
     return resposta.corpo;
+  }
+
+  private async requisicaoAutenticada(
+    rota: string,
+    corpo: Record<string, unknown>,
+  ): Promise<unknown> {
+    return this.executarAutenticada(rota, (session) =>
+      this.transporte.postJson(`${this.caminho(rota)}?session=${encodeURIComponent(session)}`, corpo),
+    );
+  }
+
+  private async requisicaoBinariaAutenticada(
+    rota: string,
+    caminhoComQuery: (session: string) => string,
+    corpo: Uint8Array,
+    contentType: string,
+  ): Promise<unknown> {
+    return this.executarAutenticada(rota, (session) =>
+      this.transporte.postBinario(this.caminho(caminhoComQuery(session)), corpo, contentType),
+    );
   }
 
   /** Cria objetos em lote — o chamador nunca deve fazer uma requisição por pessoa. */
@@ -206,25 +244,24 @@ export class IDFaceClient {
     }
   }
 
-  /** Upload da foto facial — binário puro, nunca em JSON. */
+  /**
+   * Upload da foto facial — binário puro, nunca em JSON. Passa pelo mesmo
+   * mecanismo de renovação reativa de sessão (401/403 -> novo login ->
+   * tenta de novo uma vez) que as demais chamadas autenticadas, para que
+   * uma sessão invalidada entre a renovação proativa e o envio não derrube
+   * o upload sem necessidade.
+   */
   async enviarFotoUsuario(
     userId: number,
     imagem: Uint8Array,
     contentType: string,
   ): Promise<void> {
-    const session = await this.garantirSessao();
-    const resposta = await this.transporte.postBinario(
-      `${this.caminho("/user_set_image.fcgi")}?session=${encodeURIComponent(session)}&user_id=${userId}`,
+    await this.requisicaoBinariaAutenticada(
+      "/user_set_image.fcgi",
+      (session) => `/user_set_image.fcgi?session=${encodeURIComponent(session)}&user_id=${userId}`,
       imagem,
       contentType,
     );
-    if (resposta.status !== 200) {
-      throw new ErroIDFace(
-        `Falha ao enviar foto do usuário ${userId} (status ${resposta.status})`,
-        resposta.status,
-        resposta.corpo,
-      );
-    }
   }
 
   /** Sincroniza o relógio do dispositivo com o horário informado. */

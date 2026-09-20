@@ -2,10 +2,21 @@
  * Reapresentação: mesmo rosto reconhecido de novo no mesmo leitor/cancela em
  * menos de 60s. Sinaliza que a cancela não abriu ou a pessoa não conseguiu
  * passar (requisito do spec). Indicador inferido, nunca confirmado.
+ *
+ * Considera apenas eventos "autorizado": um evento "efetivado" é a
+ * confirmação da mesma passagem (quando o firmware distingue os dois — ver
+ * lib/diagnostico/liberacao-sem-passagem.ts), não uma nova apresentação de
+ * rosto, e não deve contar como reapresentação.
  */
 
 import type { CancelaId } from "../domain/types.js";
-import type { EventoAcesso, ResultadoIndicador } from "./types.js";
+import {
+  agruparEOrdenarPorTempo,
+  autorizadosComPessoa,
+  chavePessoaLeitorCancela,
+  type EventoAcesso,
+  type ResultadoIndicador,
+} from "./types.js";
 
 export interface Reapresentacao {
   pessoaId: string;
@@ -18,27 +29,18 @@ export interface Reapresentacao {
 
 const JANELA_PADRAO_SEGUNDOS = 60;
 
-function chaveDeAgrupamento(evento: EventoAcesso): string {
-  return `${evento.pessoaId}::${evento.papelLeitor}::${evento.cancelaId ?? ""}`;
-}
-
 export function detectarReapresentacoes(
   eventos: EventoAcesso[],
   janelaSegundos = JANELA_PADRAO_SEGUNDOS,
 ): ResultadoIndicador<Reapresentacao> {
-  const comPessoa = eventos.filter((e) => e.pessoaId !== undefined);
-
-  const porGrupo = new Map<string, EventoAcesso[]>();
-  for (const evento of comPessoa) {
-    const chave = chaveDeAgrupamento(evento);
-    const lista = porGrupo.get(chave) ?? [];
-    lista.push(evento);
-    porGrupo.set(chave, lista);
-  }
+  const porGrupo = agruparEOrdenarPorTempo(
+    autorizadosComPessoa(eventos),
+    chavePessoaLeitorCancela,
+    (e) => e.timestamp.getTime(),
+  );
 
   const ocorrencias: Reapresentacao[] = [];
-  for (const grupo of porGrupo.values()) {
-    const ordenado = [...grupo].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+  for (const ordenado of porGrupo.values()) {
     for (let i = 1; i < ordenado.length; i++) {
       const anterior = ordenado[i - 1]!;
       const atual = ordenado[i]!;

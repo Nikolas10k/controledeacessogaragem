@@ -7,9 +7,13 @@
  *
  * Indicador inferido: não sabemos se a pessoa de fato saiu por outro meio
  * (ex.: saiu a pé) nem se dois veículos da mesma pessoa cruzaram a garagem.
+ *
+ * Considera apenas eventos "autorizado": um evento "efetivado" confirma a
+ * mesma passagem (quando o firmware distingue os dois), não representa uma
+ * nova entrada/saída, e não deve entrar no pareamento cronológico abaixo.
  */
 
-import type { EventoAcesso, ResultadoIndicador } from "./types.js";
+import { agruparEOrdenarPorTempo, type EventoAcesso, type ResultadoIndicador } from "./types.js";
 
 export interface EventoNaoPareado {
   pessoaId: string;
@@ -29,24 +33,20 @@ export function detectarEventosNaoPareados(
   const noPeriodo = eventos.filter(
     (e) =>
       e.pessoaId !== undefined &&
+      e.tipo === "autorizado" &&
       e.timestamp.getTime() >= periodo.inicio.getTime() &&
       e.timestamp.getTime() <= periodo.fim.getTime(),
   );
 
-  const porPessoa = new Map<string, EventoAcesso[]>();
-  for (const evento of noPeriodo) {
-    const lista = porPessoa.get(evento.pessoaId!) ?? [];
-    lista.push(evento);
-    porPessoa.set(evento.pessoaId!, lista);
-  }
+  const porPessoa = agruparEOrdenarPorTempo(
+    noPeriodo,
+    (e) => e.pessoaId!,
+    (e) => e.timestamp.getTime(),
+  );
 
   const ocorrencias: EventoNaoPareado[] = [];
 
-  for (const [pessoaId, eventosDaPessoa] of porPessoa) {
-    const ordenado = [...eventosDaPessoa].sort(
-      (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
-    );
-
+  for (const [pessoaId, ordenado] of porPessoa) {
     let entradaAberta: EventoAcesso | undefined;
     for (const evento of ordenado) {
       if (evento.papelLeitor === "entrada") {

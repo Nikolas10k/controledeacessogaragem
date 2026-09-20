@@ -60,7 +60,7 @@ export function traduzirPessoaParaProvisionamento(
   const subsolosDaPessoa = subsolosAutorizados.filter((s) =>
     idsAutorizados.has(s.id),
   );
-  if (subsolosDaPessoa.length !== pessoa.subsolosAutorizadosIds.length) {
+  if (subsolosDaPessoa.length !== idsAutorizados.size) {
     throw new ErroDeProvisionamento(
       `Pessoa ${pessoa.id} referencia subsolo(s) autorizado(s) inexistente(s)`,
     );
@@ -101,9 +101,6 @@ export function traduzirPessoaParaProvisionamento(
     a.codigo.localeCompare(b.codigo),
   );
 
-  const nomesGrupos = subsolosOrdenados.map(nomeGrupoSubsolo);
-  nomesGrupos.push(GRUPO_SAIDA);
-
   const grupos = [
     ...subsolosOrdenados.map((subsolo) => ({
       nome: nomeGrupoSubsolo(subsolo),
@@ -111,6 +108,7 @@ export function traduzirPessoaParaProvisionamento(
     })),
     { nome: GRUPO_SAIDA, descricao: "Acesso ao leitor de saída" },
   ];
+  const nomesGrupos = grupos.map((g) => g.nome);
 
   const regrasAcesso = [
     ...subsolosOrdenados.map((subsolo) => ({

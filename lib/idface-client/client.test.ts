@@ -224,6 +224,30 @@ describe("IDFaceClient — foto, relógio e firmware", () => {
     expect(chamada?.url).toContain("user_id=7");
   });
 
+  it("renova a sessão e tenta o upload de foto novamente uma vez quando o dispositivo responde 401", async () => {
+    let sessoesEmitidas = 0;
+    transporte.quando("/login.fcgi", () => {
+      sessoesEmitidas += 1;
+      return { status: 200, corpo: { session: `sess-${sessoesEmitidas}` } };
+    });
+
+    let primeiraChamada = true;
+    transporte.quando("/user_set_image.fcgi", (chamada) => {
+      const sessaoUsada = new URL(chamada.url).searchParams.get("session");
+      if (primeiraChamada) {
+        primeiraChamada = false;
+        expect(sessaoUsada).toBe("sess-1");
+        return { status: 401, corpo: {} };
+      }
+      expect(sessaoUsada).toBe("sess-2");
+      return { status: 200, corpo: {} };
+    });
+
+    await cliente.enviarFotoUsuario(7, new Uint8Array([1]), "image/jpeg");
+
+    expect(sessoesEmitidas).toBe(2);
+  });
+
   it("sincronizarRelogio envia o horário em epoch segundos", async () => {
     transporte.quando("/set_system_time.fcgi", () => ({ status: 200, corpo: {} }));
     await cliente.sincronizarRelogio(new Date("2026-01-01T00:00:00Z"));
