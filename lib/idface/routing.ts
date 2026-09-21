@@ -11,7 +11,7 @@
  * autorizados (não precisa escolher uma única cancela).
  */
 
-import type { CancelaId, Subsolo } from "../domain/types.js";
+import type { CancelaId, Subsolo } from "../domain/types";
 
 /**
  * Dado o conjunto de subsolos autorizados de uma pessoa, resolve o conjunto

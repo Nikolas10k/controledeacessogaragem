@@ -15,7 +15,7 @@
  * responsabilidade do chamador obter via IDFaceClient.carregarObjetos.
  */
 
-import type { PlanoProvisionamento } from "../idface/desired-state.js";
+import type { PlanoProvisionamento } from "../idface/desired-state";
 
 export interface GrupoExistente {
   nome: string;

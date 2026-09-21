@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcularBaseline, excedeLimiarDeAlerta, type ContagemDiaria } from "./baseline.js";
+import { calcularBaseline, excedeLimiarDeAlerta, type ContagemDiaria } from "./baseline";
 
 function serieConstante(valor: number, dias: number, ateExclusive: Date): ContagemDiaria[] {
   const serie: ContagemDiaria[] = [];

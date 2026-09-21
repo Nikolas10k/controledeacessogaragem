@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { OcorrenciaManual } from "./ocorrencia-manual.js";
-import { montarRelatorioSaudeCancelas } from "./relatorio-mensal.js";
-import type { EventoAcesso } from "./types.js";
+import type { OcorrenciaManual } from "./ocorrencia-manual";
+import { montarRelatorioSaudeCancelas } from "./relatorio-mensal";
+import type { EventoAcesso } from "./types";
 
 const periodo = { inicio: new Date("2026-09-01T00:00:00Z"), fim: new Date("2026-09-30T23:59:59Z") };
 

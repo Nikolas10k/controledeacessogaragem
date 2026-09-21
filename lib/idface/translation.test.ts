@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import type { Leitor, Pessoa, Subsolo } from "../domain/types.js";
+import type { Leitor, Pessoa, Subsolo } from "../domain/types";
 import {
   ErroDeProvisionamento,
   GRUPO_SAIDA,
   cancelasNoPlano,
   nomeGrupoSubsolo,
   traduzirPessoaParaProvisionamento,
-} from "./translation.js";
+} from "./translation";
 
 const subsolo1: Subsolo = { id: "s1", codigo: "1", nome: "1º subsolo", cancelaId: "A" };
 const subsolo2: Subsolo = { id: "s2", codigo: "2", nome: "2º subsolo", cancelaId: "B" };

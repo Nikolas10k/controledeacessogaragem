@@ -11,7 +11,7 @@
  * Manter esse limite explícito é o que torna a tradução testável sem rede.
  */
 
-import type { CancelaId } from "../domain/types.js";
+import type { CancelaId } from "../domain/types";
 
 export interface EstadoDesejadoUsuario {
   /** Id da pessoa no cadastro — usado para correlacionar com o dispositivo. */

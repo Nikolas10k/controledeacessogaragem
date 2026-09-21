@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { EventoAcesso } from "./types.js";
-import { detectarEventosNaoPareados } from "./entrada-saida.js";
+import type { EventoAcesso } from "./types";
+import { detectarEventosNaoPareados } from "./entrada-saida";
 
 const periodo = { inicio: new Date("2026-09-20T00:00:00Z"), fim: new Date("2026-09-20T23:59:59Z") };
 

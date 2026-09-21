@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectarCarona } from "./carona.js";
+import { detectarCarona } from "./carona";
 
 describe("detectarCarona", () => {
   it("declara-se indisponível e explica a limitação de dados", () => {

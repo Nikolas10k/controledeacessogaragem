@@ -6,9 +6,9 @@
  * (entregável 2) é quem aplica este estado desejado no(s) dispositivo(s).
  */
 
-import type { Leitor, Pessoa, Subsolo } from "../domain/types.js";
-import type { PlanoProvisionamento } from "./desired-state.js";
-import { resolverCancelasParaSubsolos } from "./routing.js";
+import type { Leitor, Pessoa, Subsolo } from "../domain/types";
+import type { PlanoProvisionamento } from "./desired-state";
+import { resolverCancelasParaSubsolos } from "./routing";
 
 export const GRUPO_SAIDA = "ACESSO_SAIDA";
 

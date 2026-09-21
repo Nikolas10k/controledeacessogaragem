@@ -8,7 +8,7 @@
  * leitores (fronteira AGENTE / APLICAÇÃO do spec do produto).
  */
 
-import type { RespostaHttp, TransporteHttp } from "./transport.js";
+import type { RespostaHttp, TransporteHttp } from "./transport";
 import type {
   ClausulaWhere,
   RespostaCountObjects,
@@ -17,7 +17,7 @@ import type {
   RespostaLogin,
   RespostaSystemInformation,
   TipoObjetoIDFace,
-} from "./types.js";
+} from "./types";
 
 export class ErroIDFace extends Error {
   /**

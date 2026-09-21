@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { ErroAutenticacaoIDFace, ErroIDFace, IDFaceClient } from "./client.js";
-import { TransporteFalso } from "./fake-transport.test-helper.js";
+import { ErroAutenticacaoIDFace, ErroIDFace, IDFaceClient } from "./client";
+import { TransporteFalso } from "./fake-transport.test-helper";
 
 function criarCliente(transporte: TransporteFalso, agora?: () => number) {
   return new IDFaceClient({

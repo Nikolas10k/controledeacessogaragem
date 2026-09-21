@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolverCapacidades } from "./firmware.js";
+import { resolverCapacidades } from "./firmware";
 
 describe("resolverCapacidades", () => {
   it("trata firmware ausente como o mínimo (sem recursos avançados)", () => {

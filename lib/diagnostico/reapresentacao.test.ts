@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { EventoAcesso } from "./types.js";
-import { detectarReapresentacoes } from "./reapresentacao.js";
+import type { EventoAcesso } from "./types";
+import { detectarReapresentacoes } from "./reapresentacao";
 
 function evento(overrides: Partial<EventoAcesso> = {}): EventoAcesso {
   return {

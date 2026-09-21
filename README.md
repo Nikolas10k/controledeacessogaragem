@@ -77,9 +77,43 @@ limitação.
   das cancelas". A renderização em PDF fica para o entregável de
   interface/relatórios — aqui só os dados agregados e testáveis.
 
-Ainda não implementados: interface e relatórios (incluindo a geração do PDF
-mensal), fila de sincronização persistida em banco (hoje só a referência em
-memória do agente).
+**Entregável 4 (em andamento) — interface** (`app/`, Next.js 16 App Router +
+Supabase + Prisma): primeira fatia funcional da aplicação.
+
+- Autenticação via Supabase Auth (`app/(login)/`) — login/logout; guard de
+  sessão em `lib/auth/session.ts`.
+- `/leitores` — painel com status e último sync de cada leitor (lê via
+  Prisma). "Forçar sincronização" está na tela mas **desabilitado**: exige a
+  fila de sincronização persistida em banco, que ainda não existe (hoje só
+  a referência em memória do agente, `lib/idface-client/queue.ts`).
+- `/pessoas` e `/pessoas/nova` — cadastro individual (spec seção CADASTRO A,
+  sem foto/webcam ainda) com validação e vínculo a subsolos autorizados.
+- `/diagnostico` — dashboard "Saúde das cancelas" consumindo
+  `lib/diagnostico/relatorio-mensal.ts` a partir da nova tabela
+  `LogAcesso` (persistência dos logs coletados pelo agente — ainda vazia
+  até o pipeline `log-collector.ts` → banco ser conectado a um leitor
+  real).
+- Dados sensíveis (Pessoa, ConsentimentoLGPD, LogAcesso, ...) passam por
+  `lib/db/prisma.ts` (conexão direta ao Postgres, credencial só no
+  servidor) — não pelo client Supabase JS/PostgREST. RLS está habilitado em
+  todas as tabelas com política "nega tudo para anon/authenticated"
+  (`prisma/migrations/.../rls`) até existir um sistema de papéis.
+
+**⚠️ Bloqueio conhecido: não existe projeto Supabase provisionado ainda** — a
+conta atingiu o limite de projetos gratuitos e a criação de um novo projeto
+foi adiada a pedido do usuário. O app compila (`next build`) e roda
+(`next dev`) normalmente, mas todas as páginas com dado (`/leitores`,
+`/pessoas`, `/diagnostico`) mostram "não foi possível conectar ao banco"
+até `DATABASE_URL`/`NEXT_PUBLIC_SUPABASE_URL` apontarem para um projeto
+real. As migrações SQL já estão prontas em `prisma/migrations/` — aplicar
+assim que o projeto existir (`pnpm prisma migrate deploy` ou via
+`apply_migration` do MCP da Supabase).
+
+Ainda não implementados: perfis com privilégio mínimo (condômino / porteiro
+/ administrador — hoje todo usuário autenticado tem o mesmo acesso), MFA,
+cadastro em lote (CSV/ZIP), foto/webcam, geração do PDF mensal, cadastro de
+empresas/subsolos/vagas/veículos (telas próprias), fila de sincronização
+persistida em banco, deploy na Vercel.
 
 ## Segurança e LGPD — estado atual vs. exigido pelo spec
 
@@ -115,28 +149,40 @@ implementado ainda, e não deve ser lido como concluído:
 
 ## Stack
 
-Node.js + TypeScript · Prisma + PostgreSQL · Vitest.
+Node.js + TypeScript · Next.js 16 (App Router) + Tailwind v4 · Supabase
+(Auth + Postgres) · Prisma · Vitest.
 
 ## Como rodar
 
 ```bash
 pnpm install
-pnpm test        # testes da camada de tradução e do cliente iDFace
+pnpm test        # testes de lib/ (camada de tradução, cliente iDFace, diagnóstico)
 pnpm typecheck
 ```
 
-Persistência (opcional nesta fase, ainda não há código que leia/escreva no
-banco):
+Aplicação web (precisa de `DATABASE_URL` + variáveis do Supabase — ver
+`.env.example`; sem elas, as páginas com dado mostram um erro de conexão em
+vez de quebrar):
 
 ```bash
 cp .env.example .env
 pnpm prisma:generate
+pnpm dev
 ```
 
 ## Estrutura
 
 ```
+app/
+  (login)/        login/logout (Supabase Auth)
+  (app)/          rotas autenticadas: leitores, pessoas, diagnóstico
+components/
+  ui.tsx          primitivos (Button, Input, Label, Card, FieldError)
+proxy.ts          refresh de sessão Supabase (Next.js 16: renomeado de middleware.ts)
 lib/
+  db/             prisma.ts (dados), supabase-server/browser.ts (só auth), env.ts
+  auth/           session.ts — guard de rotas autenticadas
+  domain/
   domain/         tipos de domínio do cadastro (Pessoa, Empresa, Subsolo, ...)
   idface/         camada de tradução negócio -> estado desejado no iDFace
     routing.ts        regra de roteamento subsolo -> cancela

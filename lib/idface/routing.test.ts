@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { Subsolo } from "../domain/types.js";
+import type { Subsolo } from "../domain/types";
 import {
   resolverCancelasParaSubsolos,
   temAcessoAMultiplasCancelas,
-} from "./routing.js";
+} from "./routing";
 
 const subsolo1: Subsolo = { id: "s1", codigo: "1", nome: "1º subsolo", cancelaId: "A" };
 const subsolo2: Subsolo = { id: "s2", codigo: "2", nome: "2º subsolo", cancelaId: "B" };

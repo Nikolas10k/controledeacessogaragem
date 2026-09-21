@@ -13,7 +13,7 @@
  * nova entrada/saída, e não deve entrar no pareamento cronológico abaixo.
  */
 
-import { agruparEOrdenarPorTempo, type EventoAcesso, type ResultadoIndicador } from "./types.js";
+import { agruparEOrdenarPorTempo, type EventoAcesso, type ResultadoIndicador } from "./types";
 
 export interface EventoNaoPareado {
   pessoaId: string;

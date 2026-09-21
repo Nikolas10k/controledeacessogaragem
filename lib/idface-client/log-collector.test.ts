@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { IDFaceClient } from "./client.js";
-import { TransporteFalso } from "./fake-transport.test-helper.js";
-import { ArmazenamentoDeCursorEmMemoria, coletarLogsIncrementais } from "./log-collector.js";
+import { IDFaceClient } from "./client";
+import { TransporteFalso } from "./fake-transport.test-helper";
+import { ArmazenamentoDeCursorEmMemoria, coletarLogsIncrementais } from "./log-collector";
 
 describe("coletarLogsIncrementais", () => {
   let transporte: TransporteFalso;

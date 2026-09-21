@@ -4,7 +4,7 @@
  * (requisito de eficiência do spec).
  */
 
-import type { IDFaceClient } from "./client.js";
+import type { IDFaceClient } from "./client";
 
 export interface LogAcessoIDFace {
   id: number;

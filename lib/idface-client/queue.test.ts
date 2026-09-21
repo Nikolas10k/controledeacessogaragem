@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FilaSincronizacaoEmMemoria, calcularBackoffMs } from "./queue.js";
+import { FilaSincronizacaoEmMemoria, calcularBackoffMs } from "./queue";
 
 describe("calcularBackoffMs", () => {
   it("cresce exponencialmente a partir da base", () => {

@@ -48,6 +48,12 @@ enum TipoOcorrenciaManual {
   abertura_espontanea
 }
 
+/// Espelha EventoAcesso["tipo"] em lib/diagnostico/types.ts.
+enum TipoEventoAcesso {
+  autorizado
+  efetivado
+}
+
 model Empresa {
   id        String   @id @default(uuid())
   nome      String
@@ -87,6 +93,7 @@ model Pessoa {
   veiculos            Veiculo[]
   vaga                Vaga?
   consentimentos      ConsentimentoLGPD[]
+  logsAcesso          LogAcesso[]
 
   /// Cache do consentimento vigente — a fonte da verdade é ConsentimentoLGPD;
   /// este campo evita uma consulta extra na camada de tradução.
@@ -160,8 +167,33 @@ model Leitor {
   online          Boolean   @default(false)
   ultimoSyncEm    DateTime?
 
+  logs         LogAcesso[]
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
+}
+
+/// Log de acesso consolidado — o que lib/idface-client/log-collector.ts
+/// coleta do dispositivo (id > cursor, por leitor) e a aplicação persiste
+/// aqui. Formato próximo de EventoAcesso (lib/diagnostico/types.ts) para
+/// que a conversão na leitura seja direta; pessoaId fica nulo quando o log
+/// não pôde ser correlacionado a uma pessoa cadastrada.
+model LogAcesso {
+  id                  String      @id @default(uuid())
+  leitor              Leitor      @relation(fields: [leitorId], references: [id])
+  leitorId            String
+  /// Id do log no próprio dispositivo — usado pelo cursor de coleta incremental.
+  idNoDispositivo     Int
+  pessoa              Pessoa?     @relation(fields: [pessoaId], references: [id])
+  pessoaId            String?
+  cancelaId           CancelaId?
+  papelLeitor         PapelLeitor
+  tipo                TipoEventoAcesso
+  timestamp           DateTime
+  criadoEm            DateTime    @default(now())
+
+  @@unique([leitorId, idNoDispositivo])
+  @@index([pessoaId, timestamp])
+  @@index([leitorId, timestamp])
 }
 
 /// Registro manual de ocorrência feito pela portaria — fonte de verdade

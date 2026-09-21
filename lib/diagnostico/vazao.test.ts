@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { EventoAcesso } from "./types.js";
-import { agruparVazaoPorHoraEDiaDaSemana, calcularIntervalosDeVazao } from "./vazao.js";
+import type { EventoAcesso } from "./types";
+import { agruparVazaoPorHoraEDiaDaSemana, calcularIntervalosDeVazao } from "./vazao";
 
 function evento(overrides: Partial<EventoAcesso> = {}): EventoAcesso {
   return {

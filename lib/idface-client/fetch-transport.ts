@@ -5,7 +5,7 @@
  * exercitado por eles.
  */
 
-import type { RespostaHttp, TransporteHttp } from "./transport.js";
+import type { RespostaHttp, TransporteHttp } from "./transport";
 
 async function corpoDaResposta(resposta: Response): Promise<unknown> {
   const texto = await resposta.text();
@@ -31,7 +31,10 @@ export class TransporteFetch implements TransporteHttp {
     const resposta = await fetch(url, {
       method: "POST",
       headers: { "content-type": contentType },
-      body: corpo,
+      // `Uint8Array` genérico (TS 5.7+) não bate estruturalmente com o
+      // `BodyInit` do lib.dom nesta combinação de versões — é o mesmo
+      // Uint8Array em runtime, só uma folga do sistema de tipos.
+      body: corpo as BodyInit,
     });
     return { status: resposta.status, corpo: await corpoDaResposta(resposta) };
   }

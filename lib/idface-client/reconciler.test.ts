@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { Leitor, Pessoa, Subsolo } from "../domain/types.js";
-import { traduzirPessoaParaProvisionamento } from "../idface/translation.js";
-import { construirOperacoesDeProvisionamento, type EstadoAtualDispositivo } from "./reconciler.js";
+import type { Leitor, Pessoa, Subsolo } from "../domain/types";
+import { traduzirPessoaParaProvisionamento } from "../idface/translation";
+import { construirOperacoesDeProvisionamento, type EstadoAtualDispositivo } from "./reconciler";
 
 const subsolo1: Subsolo = { id: "s1", codigo: "1", nome: "1º subsolo", cancelaId: "A" };
 const subsolo2: Subsolo = { id: "s2", codigo: "2", nome: "2º subsolo", cancelaId: "B" };

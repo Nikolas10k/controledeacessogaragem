@@ -3,7 +3,7 @@ import {
   ErroValidacaoOcorrencia,
   validarEntradaOcorrenciaManual,
   type EntradaOcorrenciaManual,
-} from "./ocorrencia-manual.js";
+} from "./ocorrencia-manual";
 
 function entradaBase(overrides: Partial<EntradaOcorrenciaManual> = {}): EntradaOcorrenciaManual {
   return {

@@ -5,8 +5,8 @@
  * padrões de uso e, quando houver esse dado, com dias de chuva.
  */
 
-import type { CancelaId } from "../domain/types.js";
-import { agruparPor, type EventoAcesso } from "./types.js";
+import type { CancelaId } from "../domain/types";
+import { agruparPor, type EventoAcesso } from "./types";
 
 export interface IntervaloDeVazao {
   cancelaId: CancelaId;

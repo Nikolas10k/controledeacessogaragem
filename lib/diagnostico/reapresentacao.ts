@@ -9,14 +9,14 @@
  * rosto, e não deve contar como reapresentação.
  */
 
-import type { CancelaId } from "../domain/types.js";
+import type { CancelaId } from "../domain/types";
 import {
   agruparEOrdenarPorTempo,
   autorizadosComPessoa,
   chavePessoaLeitorCancela,
   type EventoAcesso,
   type ResultadoIndicador,
-} from "./types.js";
+} from "./types";
 
 export interface Reapresentacao {
   pessoaId: string;

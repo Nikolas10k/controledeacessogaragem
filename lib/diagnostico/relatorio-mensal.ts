@@ -10,15 +10,15 @@
  * biblioteca de PDF.
  */
 
-import type { CancelaId } from "../domain/types.js";
-import { detectarCarona } from "./carona.js";
-import { detectarEventosNaoPareados, type PeriodoAnalise } from "./entrada-saida.js";
+import type { CancelaId } from "../domain/types";
+import { detectarCarona } from "./carona";
+import { detectarEventosNaoPareados, type PeriodoAnalise } from "./entrada-saida";
 import {
   detectarLiberacoesSemPassagem,
-} from "./liberacao-sem-passagem.js";
-import type { OcorrenciaManual } from "./ocorrencia-manual.js";
-import { detectarReapresentacoes } from "./reapresentacao.js";
-import type { EventoAcesso } from "./types.js";
+} from "./liberacao-sem-passagem";
+import type { OcorrenciaManual } from "./ocorrencia-manual";
+import { detectarReapresentacoes } from "./reapresentacao";
+import type { EventoAcesso } from "./types";
 
 const CANCELAS: readonly CancelaId[] = ["A", "B"];
 

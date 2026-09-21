@@ -6,14 +6,14 @@
  * em vez de um número inventado.
  */
 
-import type { CancelaId } from "../domain/types.js";
+import type { CancelaId } from "../domain/types";
 import {
   agruparEOrdenarPorTempo,
   chavePessoaLeitorCancela,
   comPessoa,
   type EventoAcesso,
   type ResultadoIndicador,
-} from "./types.js";
+} from "./types";
 
 export interface LiberacaoSemPassagem {
   pessoaId: string;

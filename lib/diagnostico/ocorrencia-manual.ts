@@ -5,7 +5,7 @@
  * inferidos no relatório mensal (ver relatorio-mensal.ts).
  */
 
-import type { CancelaId } from "../domain/types.js";
+import type { CancelaId } from "../domain/types";
 
 export type TipoOcorrenciaManual =
   | "nao_abriu"

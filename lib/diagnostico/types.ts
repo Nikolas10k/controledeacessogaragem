@@ -9,7 +9,7 @@
  * (`TipoIndicador`) para que a UI não possa esquecer de exibi-lo.
  */
 
-import type { CancelaId } from "../domain/types.js";
+import type { CancelaId } from "../domain/types";
 
 export type TipoIndicador = "inferido" | "registro_manual";
 

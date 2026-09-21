@@ -3,7 +3,7 @@
  * acordo com um roteador configurável por caminho (sem query string).
  */
 
-import type { RespostaHttp, TransporteHttp } from "./transport.js";
+import type { RespostaHttp, TransporteHttp } from "./transport";
 
 export interface ChamadaRegistrada {
   metodo: "postJson" | "postBinario";
